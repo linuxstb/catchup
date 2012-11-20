@@ -35,6 +35,88 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
      s0000013 - Commmunity Channel
 */
 
+#define ION_PARTNER_BBC                1
+#define ION_PARTNER_ITV                3
+#define ION_PARTNER_CHANNEL4           4
+#define ION_PARTNER_CHANNEL5           5
+#define ION_PARTNER_S4C               11
+#define ION_PARTNER_COMMUNITY_CHANNEL 13
+
+
+struct ion_channels_t
+{
+  char* channel_id;
+  int partner_id;
+};
+
+static struct ion_channels_t ion_channels[] = 
+{ 
+  { "bbc_one_cambridge",         ION_PARTNER_BBC },
+  { "bbc_one_channel_islands",   ION_PARTNER_BBC },
+  { "bbc_one_east",              ION_PARTNER_BBC },
+  { "bbc_one_east_midlands",     ION_PARTNER_BBC },
+  { "bbc_one_east_yorkshire",    ION_PARTNER_BBC },
+  { "bbc_one_london",            ION_PARTNER_BBC },
+  { "bbc_one_north_east",        ION_PARTNER_BBC },
+  { "bbc_one_north_west",        ION_PARTNER_BBC },
+  { "bbc_one_northern_ireland",  ION_PARTNER_BBC },
+  { "bbc_one_oxford",            ION_PARTNER_BBC },
+  { "bbc_one_scotland",          ION_PARTNER_BBC },
+  { "bbc_one_south",             ION_PARTNER_BBC },
+  { "bbc_one_south_east",        ION_PARTNER_BBC },
+  { "bbc_one_south_west",        ION_PARTNER_BBC },
+  { "bbc_one_wales",             ION_PARTNER_BBC },
+  { "bbc_one_west",              ION_PARTNER_BBC },
+  { "bbc_one_west_midlands",     ION_PARTNER_BBC },
+  { "bbc_one_yorks",             ION_PARTNER_BBC },
+  { "bbc_two_england",           ION_PARTNER_BBC },
+  { "bbc_two_northern_ireland",  ION_PARTNER_BBC },
+  { "bbc_two_scotland",          ION_PARTNER_BBC },
+  { "bbc_two_wales",             ION_PARTNER_BBC },
+  { "bbc_three",                 ION_PARTNER_BBC },
+  { "bbc_four",                  ION_PARTNER_BBC },
+  { "bbc_news24",                ION_PARTNER_BBC },
+  { "bbc_hd",                    ION_PARTNER_BBC },
+  { "cbeebies",                  ION_PARTNER_BBC },
+  { "cbbc",                      ION_PARTNER_BBC },
+  { "bbc_parliament",            ION_PARTNER_BBC },
+  { "bbc_alba",                  ION_PARTNER_BBC },
+
+  { "itv1",                      ION_PARTNER_ITV },
+  { "itv2",                      ION_PARTNER_ITV },
+  { "itv3",                      ION_PARTNER_ITV },
+  { "itv4",                      ION_PARTNER_ITV },
+
+  { "channel4",                  ION_PARTNER_CHANNEL4 },
+  { "e4",                        ION_PARTNER_CHANNEL4 },
+  { "more4",                     ION_PARTNER_CHANNEL4 },
+  { "film4",                     ION_PARTNER_CHANNEL4 },
+  { "4music",                    ION_PARTNER_CHANNEL4 },
+
+  { "channel_five",              ION_PARTNER_CHANNEL5 },
+  { "fiver",                     ION_PARTNER_CHANNEL5 },
+  { "five_usa",                  ION_PARTNER_CHANNEL5 },
+
+  { "s4c",                       ION_PARTNER_S4C },
+
+  { "community_channel",         ION_PARTNER_COMMUNITY_CHANNEL },
+  { NULL, 0}
+};
+
+int get_channel_id(char* channel)
+{
+  int i = 0;
+
+  while (ion_channels[i].channel_id) {
+    if (strcmp(ion_channels[i].channel_id, channel)==0)
+      return i;
+
+    i++;
+  }
+
+  return -1;
+}
+
 #if 0
 xmlNodePtr node = NULL;
 xmlNsPtr saml;
@@ -104,21 +186,21 @@ xmlChar* xmlNodeGetContentReEscape(xmlNode* p)
   return (xmlChar*)ss;
 }
 
-xmlDocPtr ion_get(char* partner, char* channel, char* date)
+xmlDocPtr ion_get(int channel_id, char* date)
 {
   struct MemoryStruct chunk;
   char url[128];
   xmlDocPtr pyepg_doc = NULL;       /* document pointer */
   xmlNodePtr pyepg_root = NULL;
 
-  fprintf(stderr,"Fetching ION schedule - partner=%s, channel=%s, date=%s\n",partner,channel,date);
+  fprintf(stderr,"Fetching ION schedule - partner=%d, channel=%s, date=%s\n",ion_channels[channel_id].partner_id,ion_channels[channel_id].channel_id,date);
 
   xmlInitParser();
 
-  if (strcmp(partner,"s0000001")==0) {
-    snprintf(url,sizeof(url),"http://www.bbc.co.uk/iplayer/ion/schedule/date/%s/service/%s/format/xml",date,channel);
+  if (ion_channels[channel_id].partner_id == ION_PARTNER_BBC) {
+    snprintf(url,sizeof(url),"http://www.bbc.co.uk/iplayer/ion/schedule/date/%s/service/%s/format/xml",date,ion_channels[channel_id].channel_id);
   } else {
-    snprintf(url,sizeof(url),"http://www.bbc.co.uk/iplayer/ion/partner/schedule/partner/%s/date/%s/service/%s/format/xml",partner,date,channel);
+    snprintf(url,sizeof(url),"http://www.bbc.co.uk/iplayer/ion/partner/schedule/partner/s%07d/date/%s/service/%s/format/xml",ion_channels[channel_id].partner_id,date,ion_channels[channel_id].channel_id);
   }
 
   fprintf(stderr,"Fetching %s...\n",url);
@@ -140,13 +222,13 @@ xmlDocPtr ion_get(char* partner, char* channel, char* date)
   pyepg_root = xmlNewNode(NULL, BAD_CAST "epg");
   xmlDocSetRootElement(pyepg_doc, pyepg_root);
   xmlNode* channel_node = xmlNewChild(pyepg_root, NULL, BAD_CAST "channel", NULL);
-  xmlNewProp(channel_node, BAD_CAST "id", BAD_CAST channel);
+  xmlNewProp(channel_node, BAD_CAST "id", BAD_CAST ion_channels[channel_id].channel_id);
   xmlNode* brands_node = xmlNewChild(pyepg_root, NULL, BAD_CAST "brands", NULL);
   xmlNode* seasons_node = xmlNewChild(pyepg_root, NULL, BAD_CAST "seasons", NULL);
   xmlNode* episodes_node = xmlNewChild(pyepg_root, NULL, BAD_CAST "episodes", NULL);
   xmlNode* ondemands_node = xmlNewChild(pyepg_root, NULL, BAD_CAST "ondemands", NULL);
   xmlNode* schedule_node = xmlNewChild(pyepg_root, NULL, BAD_CAST "schedule", NULL);
-  xmlNewProp(schedule_node, BAD_CAST "channel", BAD_CAST channel);
+  xmlNewProp(schedule_node, BAD_CAST "channel", BAD_CAST ion_channels[channel_id].channel_id);
 
   xmlNode* p = root->children->next->children->next;
   while (p) {
@@ -227,7 +309,7 @@ xmlDocPtr ion_get(char* partner, char* channel, char* date)
       printf("my_image_base_url=%s\n",my_image_base_url);
       printf("my_image_template_url=%s\n",my_image_template_url);
 
-      if (strcmp(partner,"s0000001")==0) {
+      if (ion_channels[channel_id].partner_id == ION_PARTNER_BBC) {
         episode_image=malloc(strlen(my_image_base_url)+strlen(episode_id)+13);
         sprintf(episode_image,"%s%s_832_468.jpg",my_image_base_url,episode_id);
       }
@@ -256,18 +338,27 @@ xmlDocPtr ion_get(char* partner, char* channel, char* date)
         xmlNewProp(ondemand_node, BAD_CAST "episode", BAD_CAST episode_id);
         xmlNewChild(ondemand_node, NULL, BAD_CAST "availability", BAD_CAST availability);
         xmlNewChild(ondemand_node, NULL, BAD_CAST "available_until", BAD_CAST available_until);
-        if (strcmp(partner,"s0000001")==0) {
-          xmlNewChild(ondemand_node, NULL, BAD_CAST "provider", BAD_CAST "bbc.co.uk");
-          xmlNewChild(ondemand_node, NULL, BAD_CAST "media_id", BAD_CAST version_id);
-        } else if (strcmp(partner,"s0000003")==0) {
-          xmlNewChild(ondemand_node, NULL, BAD_CAST "provider", BAD_CAST "itv.com");
-          xmlNewChild(ondemand_node, NULL, BAD_CAST "media_id", BAD_CAST myurl+43);
-        } else if (strcmp(partner,"s0000004")==0) {
-          xmlNewChild(ondemand_node, NULL, BAD_CAST "provider", BAD_CAST "channel4.com");
-          xmlNewChild(ondemand_node, NULL, BAD_CAST "media_id", BAD_CAST myurl+strlen(myurl)-7);
-        } else if (strcmp(partner,"s0000005")==0) {
-          xmlNewChild(ondemand_node, NULL, BAD_CAST "provider", BAD_CAST "channel5.com");
-          xmlNewChild(ondemand_node, NULL, BAD_CAST "media_id", BAD_CAST myurl+25);
+        switch (ion_channels[channel_id].partner_id)
+	{
+          case ION_PARTNER_BBC:
+            xmlNewChild(ondemand_node, NULL, BAD_CAST "provider", BAD_CAST "bbc.co.uk");
+            xmlNewChild(ondemand_node, NULL, BAD_CAST "media_id", BAD_CAST version_id);
+            break;
+
+          case ION_PARTNER_ITV:
+            xmlNewChild(ondemand_node, NULL, BAD_CAST "provider", BAD_CAST "itv.com");
+            xmlNewChild(ondemand_node, NULL, BAD_CAST "media_id", BAD_CAST myurl+43);
+            break;
+
+          case ION_PARTNER_CHANNEL4:
+            xmlNewChild(ondemand_node, NULL, BAD_CAST "provider", BAD_CAST "channel4.com");
+            xmlNewChild(ondemand_node, NULL, BAD_CAST "media_id", BAD_CAST myurl+strlen(myurl)-7);
+            break;
+
+          case ION_PARTNER_CHANNEL5:
+            xmlNewChild(ondemand_node, NULL, BAD_CAST "provider", BAD_CAST "channel5.com");
+            xmlNewChild(ondemand_node, NULL, BAD_CAST "media_id", BAD_CAST myurl+25);
+            break;
         }
       }
 
@@ -300,14 +391,26 @@ xmlDocPtr ion_get(char* partner, char* channel, char* date)
 
 int main(int argc, char* argv[])
 {
+  int channel_id;
+  int i;
   xmlDocPtr pyepg_doc;
 
-  if (argc != 4) {
-    fprintf(stderr,"Usage: ion partner channel date\n");
+  if (argc != 3) {
+    fprintf(stderr,"Usage: ion channel date\n");
+    fprintf(stderr,"\nAvailable channels:\n\n");
+    for(i=0;ion_channels[i].channel_id;i++) {
+      fprintf(stderr,"  %s\n",ion_channels[i].channel_id);
+    }
     return 1;
   }
 
-  pyepg_doc = ion_get(argv[1],argv[2],argv[3]);
+  channel_id = get_channel_id(argv[1]);
+  if (channel_id < 0) {
+    fprintf(stderr,"Unknown channel %s\n",argv[1]);
+    return 2;
+  }
+
+  pyepg_doc = ion_get(channel_id,argv[2]);
 
   if (pyepg_doc != NULL) {
 

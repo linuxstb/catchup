@@ -190,7 +190,7 @@ int catchup_get_info_iplayer(struct catchup_t* cu)
   }
 
   cu->host = strdup((char*)server);
-  cu->swfVfy = strdup("http://www.bbc.co.uk/emp/revisions/18269_21576_10player.swf?revision=18269_21576");
+  cu->swfVfy = strdup("http://www.bbc.co.uk/emp/releases/iplayer/revisions/617463_618125_4/617463_618125_4_emp.swf");
 
   if (strcmp((char*)application,"ondemand")==0) {
     char* tcUrl_fmt = "rtmp://%s:80/ondemand?_fcs_vhost=%s&undefined&%s";

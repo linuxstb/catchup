@@ -22,7 +22,7 @@ catchup_demand5.o: catchup_demand5.c catchup_internal.h catchup.h
 	gcc -W -Wall -I/usr/include/libxml2 -c -o catchup_demand5.o catchup_demand5.c
 
 catchup: main.o catchup.o rtmpdump.o catchup_utils.o catchup_iplayer.o catchup_itv.o catchup_4oD.o catchup_demand5.o $(LIBRTMP_OBJS)
-	gcc -o catchup main.o catchup.o rtmpdump.o catchup_utils.o catchup_iplayer.o catchup_itv.o catchup_4oD.o catchup_demand5.o $(LIBRTMP_OBJS) -lcurl -lxml2
+	gcc -o catchup main.o catchup.o rtmpdump.o catchup_utils.o catchup_iplayer.o catchup_itv.o catchup_4oD.o catchup_demand5.o $(LIBRTMP_OBJS) -lcurl -lxml2 -lssl
 
 rtmpdump.o: rtmpdump.c
 	gcc -W -Wall $(CFLAGS_RTMP) -c -o rtmpdump.o rtmpdump.c
